@@ -129,4 +129,5 @@ pressureComp = _mpl115a2_a0 + (_mpl115a2_b1 + _mpl115a2_c12 * temperature ) * pr
 P = ((65.0 / 1023.0) * pressureComp) + 50.0; 
 T = (temperature - 498.0) / -5.35 +25.0; 
  
-print P/10,T
+print "Pressure: " + str(round(P/10, 2)) + " hPa"
+print "Temperature: " + str(round(T,2)) + " C"
