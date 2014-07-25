@@ -1,5 +1,5 @@
 #!/usr/bin/python
- 
+# -*- coding: utf-8 -*-
 #
 #=BEGIN BRAINWORKS GPL
 #
@@ -130,4 +130,4 @@ P = ((65.0 / 1023.0) * pressureComp) + 50.0;
 T = (temperature - 498.0) / -5.35 +25.0; 
  
 print "Pressure: " + str(round(P/10, 2)) + " hPa"
-print "Temperature: " + str(round(T,2)) + " C"
+print "Temperature: " + str(round(T,2)) + " °C"
