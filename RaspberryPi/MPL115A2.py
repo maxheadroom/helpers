@@ -77,7 +77,7 @@ class MPL115A2:
 	
 	# initiate conversion inside the sensor before metrics reading
 	def startConvert(self):
-		# send conversion command   
+		# send conversion command needed for pressure reading
 		self.bus.write_i2c_block_data(self.MPL115A2_ADDRESS,self.MPL115A2_REGISTER_STARTCONVERSION,[0x12])
 		#   
 		# sleep until the conversion is certainly completed
@@ -97,16 +97,32 @@ class MPL115A2:
 		# build 
 		self.temperature = (self.temp_MSB<<8 | self.temp_LSB) >>6;
 		self.pressure = (self.pressure_MSB<< 8 | self.pressure_LSB) >>6;
-		
-		
+
+	def readRawTemperatur(self):
+		# read raw temperature AGC units
+		self.temp_MSB = self.bus.read_byte_data(self.MPL115A2_ADDRESS,self.MPL115A2_REGISTER_TEMP_MSB+0);
+		self.temp_LSB = self.bus.read_byte_data(self.MPL115A2_ADDRESS,self.MPL115A2_REGISTER_TEMP_LSB+0);
+
+		# build 
+		self.temperature = (self.temp_MSB<<8 | self.temp_LSB) >>6;
+
 	def readTemperature(self):
-		self.readRawData()
+		self.readRawTemperature()
 		return (self.temperature - 498.0) / -5.35 +25.0; 
 		
 	def readPressure(self):
 		self.readRawData()
 		pressureComp = self._mpl115a2_a0 + (self._mpl115a2_b1 + self._mpl115a2_c12 * self.temperature ) * self.pressure + self._mpl115a2_b2 * self.temperature;
 		return ((65.0 / 1023.0) * pressureComp) + 50.0; 
+
+	def readBoth(self):
+		self.readRawData()
+		pressureComp = self._mpl115a2_a0 + (self._mpl115a2_b1 + self._mpl115a2_c12 * self.temperature ) * self.pressure + self._mpl115a2_b2 * self.temperature;
+		temp = (self.temperature - 498.0) / -5.35 +25.0; 
+		press = ((65.0 / 1023.0) * pressureComp) + 50.0;
+		tinydict = {'temperature': temp,'pressure':press}
+		return tinydict
+		
 		
 	# read the factory coefficients from the sensor
 	def readCoefficients(self):
@@ -137,5 +153,8 @@ class MPL115A2Tests(unittest.TestCase):
 if __name__ == '__main__':
 	# unittest.main()
 	sensor = MPL115A2();
-	print "Temperature: " + str(sensor.readTemperature())
-	print "Pressure: " + str(sensor.readPressure())
+	# print "Temperature: " + str(sensor.readTemperature())
+	# print "Pressure: " + str(sensor.readPressure())
+	both = sensor.readBoth()
+	print "Temperature (Both): " + str(both['temperature'])
+	print "Pressure (Both): " + str(both['pressure'])
