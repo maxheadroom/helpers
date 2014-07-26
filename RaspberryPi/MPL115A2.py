@@ -4,7 +4,10 @@
 MPL115A2.py
 
 Created by Falko Zurell on 2014-07-25.
-Copyright (c) 2014 __MyCompanyName__. All rights reserved.
+Copyright (c) 2014 . All rights reserved.
+
+Python Class for http://www.adafruit.com/datasheets/MPL115A2.pdf
+
 """
 
 import sys
@@ -109,7 +112,7 @@ class MPL115A2:
         self.temperature = (self.temp_MSB << 8 | self.temp_LSB) >> 6
         self.pressure = (self.pressure_MSB << 8 | self.pressure_LSB) >> 6
 
-    def readRawTemperatur(self):
+    def readRawTemperature(self):
         # read raw temperature AGC units
         self.temp_MSB = self.bus.read_byte_data(
             self.MPL115A2_ADDRESS,
@@ -121,16 +124,19 @@ class MPL115A2:
         # build
         self.temperature = (self.temp_MSB << 8 | self.temp_LSB) >> 6
 
+    # returns Temperature in Celsius Float
     def readTemperature(self):
         self.readRawTemperature()
         return (self.temperature - 498.0) / -5.35 + 25.0
 
+    # returns Pressure reading in Pa Float
     def readPressure(self):
         self.readRawData()
         pressureComp = self._mpl115a2_a0 + \
             (self._mpl115a2_b1 + self._mpl115a2_c12 * self.temperature) * \
             self.pressure + self._mpl115a2_b2 * self.temperature
-        return ((65.0 / 1023.0) * pressureComp) + 50.0
+        press =  ((65.0 / 1023.0) * pressureComp) + 50.0
+        return press
 
     def readBoth(self):
         self.readRawData()
@@ -200,8 +206,9 @@ class MPL115A2Tests(unittest.TestCase):
 if __name__ == '__main__':
     # unittest.main()
     sensor = MPL115A2()
-    # print "Temperature: " + str(sensor.readTemperature())
-    # print "Pressure: " + str(sensor.readPressure())
+    print "Temperature: " + str(round(sensor.readTemperature(),2)) + " °C"
+    print "Pressure: " + str(round(sensor.readPressure()/10,2)) + " hPa"
     both = sensor.readBoth()
-    print "Temperature (Both): " + str(both['temperature'])
-    print "Pressure (Both): " + str(both['pressure'])
+    print "Temperature (Both): " + str(round(both['temperature'],2)) + " °C"
+    print "Pressure (Both): " + str(round(both['pressure']/10,2)) + " hPa"
+
