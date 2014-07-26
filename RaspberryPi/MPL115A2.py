@@ -4,16 +4,36 @@
 MPL115A2.py
 
 Created by Falko Zurell on 2014-07-25.
-Copyright (c) 2014 . All rights reserved.
+
+### BEGIN GNU General Public License v3
+
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see http://www.gnu.org/licenses/gpl-3.0.html.
+
+### END GNU GPL v3 ###
+
+
 
 Python Class for http://www.adafruit.com/datasheets/MPL115A2.pdf
 
+derived from http://www.brainworks.it/rpi-environmental-monitoring/index.php?id=read-pressure-from-mpl115a2
+
 """
 
-import sys
-import os
 import unittest
 import time
+import inspect
 
 from smbus import SMBus
 
@@ -66,20 +86,18 @@ class MPL115A2:
     temperature = -1
     pressure = -1
 
-    def __init__(self, address=0x60, smbus=0, debug=False):
-        global MPL115A2_ADDRESS
-        global bus
+    def __init__(self, address=0x60, smbus=0, debug=True):
         self.bus = SMBus(smbus)
         self.MPL115A2_ADDRESS = address
         self.debug = debug
 
         # one time read factory calibrated coefficients from sensor
         # Read the calibration data
-        self.readCoefficients()
-        pass
+        self.read_coefficients()
+        # pass
 
     # initiate conversion inside the sensor before metrics reading
-    def startConvert(self):
+    def start_convert(self):
         # send conversion command needed for pressure reading
         self.bus.write_i2c_block_data(
             self.MPL115A2_ADDRESS,
@@ -89,9 +107,9 @@ class MPL115A2:
         # sleep until the conversion is certainly completed
         time.sleep(0.3)
 
-    def readRawData(self):
+    def read_raw_data(self):
         # prepare sensor for reading
-        self.startConvert()
+        self.start_convert()
         # read pressure AGC units
         self.pressure_MSB = self.bus.read_byte_data(
             self.MPL115A2_ADDRESS,
@@ -111,8 +129,12 @@ class MPL115A2:
         # build
         self.temperature = (self.temp_MSB << 8 | self.temp_LSB) >> 6
         self.pressure = (self.pressure_MSB << 8 | self.pressure_LSB) >> 6
+        
+        self.debug_output(" Raw temperature: " + str(self.temperature))
+        self.debug_output(" Raw pressure: " + str(self.pressure))
+        
 
-    def readRawTemperature(self):
+    def read_raw_temperature(self):
         # read raw temperature AGC units
         self.temp_MSB = self.bus.read_byte_data(
             self.MPL115A2_ADDRESS,
@@ -125,31 +147,31 @@ class MPL115A2:
         self.temperature = (self.temp_MSB << 8 | self.temp_LSB) >> 6
 
     # returns Temperature in Celsius Float
-    def readTemperature(self):
-        self.readRawTemperature()
+    def read_temperature(self):
+        self.read_raw_temperature()
         return (self.temperature - 498.0) / -5.35 + 25.0
 
     # returns Pressure reading in Pa Float
-    def readPressure(self):
-        self.readRawData()
+    def read_pressure(self):
+        self.read_raw_data()
         pressureComp = self._mpl115a2_a0 + \
             (self._mpl115a2_b1 + self._mpl115a2_c12 * self.temperature) * \
             self.pressure + self._mpl115a2_b2 * self.temperature
         press =  ((65.0 / 1023.0) * pressureComp) + 50.0
         return press
 
-    def readBoth(self):
-        self.readRawData()
+
+    def read_both(self):
+        self.read_raw_data()
         pressureComp = self._mpl115a2_a0 + \
             (self._mpl115a2_b1 + self._mpl115a2_c12 * self.temperature) * \
             self.pressure + self._mpl115a2_b2 * self.temperature
         temp = (self.temperature - 498.0) / -5.35 + 25.0
         press = ((65.0 / 1023.0) * pressureComp) + 50.0
-        tinydict = {'temperature': temp, 'pressure': press}
-        return tinydict
+        return {'temperature': temp, 'pressure': press}
 
     # read the factory coefficients from the sensor
-    def readCoefficients(self):
+    def read_coefficients(self):
 
         self.a0_MSB = self.bus.read_byte_data(
             self.MPL115A2_ADDRESS,
@@ -196,19 +218,28 @@ class MPL115A2:
         self._mpl115a2_c12 = (float)(
             (self.c12_MSB << 8) | (self.c12_LSB >> 2)) / (2 << 13)
 
-
+    def debug_output(self, message):
+        if (self.debug):
+            print "DEBUG: (" + inspect.stack()[1][3] +")" + str(message)
+            
+            
+            
+# TBD: Unit Tests
 class MPL115A2Tests(unittest.TestCase):
 
     def setUp(self):
         pass
+    def __init__(self):
+        pass
 
 
+# main class if this file is used directly
 if __name__ == '__main__':
     # unittest.main()
     sensor = MPL115A2()
-    print "Temperature: " + str(round(sensor.readTemperature(),2)) + " °C"
-    print "Pressure: " + str(round(sensor.readPressure()/10,2)) + " hPa"
-    both = sensor.readBoth()
+    # print "Temperature: " + str(round(sensor.read_temperature(),2)) + " °C"
+    # print "Pressure: " + str(round(sensor.read_pressure()/10,2)) + " hPa"
+    both = sensor.read_both()
     print "Temperature (Both): " + str(round(both['temperature'],2)) + " °C"
     print "Pressure (Both): " + str(round(both['pressure']/10,2)) + " hPa"
 
