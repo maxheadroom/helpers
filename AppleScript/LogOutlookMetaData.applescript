@@ -46,8 +46,8 @@ tell application "Microsoft Outlook"
 		tell item a of theMessages
 			-- Retrieve the name of the current message's sender.
 			set theSender to sender
-			set theCC to cc recipients
-			set theTO to to recipients
+			
+			
 			try
 				set theSenderName to name of theSender
 				
@@ -62,13 +62,26 @@ tell application "Microsoft Outlook"
 			set thePriority to priority
 			set theSource to source as text
 			set theSize to length of theSource
+			
+			-- extract CC recipients
+			set theCC to cc recipients
 			set CCList to ""
 			repeat with rcp in theCC
-				log address of rcp
-				get address of email address of rcp
-				set recipientAddress to address of email address of rcp
-				set CCList to CCList & "," & recipient as text
+				set recipientEMail to email address of rcp
+				set CCList to CCList & address of recipientEMail as text
+				set CCList to CCList & ","
 			end repeat
+			
+			-- extract the TO recipients
+			set theTO to to recipients
+			set TOList to ""
+			repeat with rcp in theTO
+				set recipientEMail to email address of rcp
+				set TOList to TOList & address of recipientEMail as text
+				set TOList to TOList & ","
+			end repeat
+			
+			
 			if thePriority = priority normal then
 				set mailPriority to "normal"
 			else if thePriority = priority high then
@@ -84,7 +97,7 @@ tell application "Microsoft Outlook"
 		end tell
 		
 		set theSubject to my replace_chars(theSubject, "|", "--")
-		set output to timeReceived & "|" & timeSent & "|" & theSenderAddress & "|" & theSubject & "|" & mailPriority & "|" & isMeeting & "|" & theSize & return
+		set output to timeReceived & "|" & timeSent & "|" & theSenderAddress & "|" & TOList & "|" & CCList & "|" & theSubject & "|" & mailPriority & "|" & isMeeting & "|" & theSize & return
 		
 		my write_to_file(output as string, this_file, true)
 		
