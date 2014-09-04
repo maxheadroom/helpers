@@ -52,9 +52,17 @@ tell application "Microsoft Outlook"
 				set theSenderName to name of theSender
 				
 			on error
-				set theSenderName to address of theSender
+				try
+					set theSenderName to address of theSender
+				on error
+					set theSenderName to "unresolved Sender Name"
+				end try
 			end try
-			set theSenderAddress to address of theSender
+			try
+				set theSenderAddress to address of theSender
+			on error
+				set theSenderAddress to "unresolved"
+			end try
 			-- Retrieve the current message's subject.
 			set theSubject to subject
 			set timeReceived to time received
