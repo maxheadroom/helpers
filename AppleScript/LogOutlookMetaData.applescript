@@ -1,8 +1,8 @@
 
-
+-- Set location of logfile
 set this_file to (((path to home folder) as string) & "MailLog.log")
 
-
+-- a function to append data to the logfile
 on write_to_file(this_data, target_file, append_data)
 	try
 		set the target_file to the target_file as string
@@ -19,6 +19,7 @@ on write_to_file(this_data, target_file, append_data)
 	end try
 end write_to_file
 
+-- a function to replace characters in a given string
 on replace_chars(this_text, search_string, replacement_string)
 	set AppleScript's text item delimiters to the search_string
 	set the item_list to every text item of this_text
@@ -28,19 +29,13 @@ on replace_chars(this_text, search_string, replacement_string)
 	return this_text
 end replace_chars
 
--- This code is triggered if you manually run the script in AppleScript Editor. It retreives any selected messages and then processes them. This is good for testing.
-tell application "Microsoft Outlook"
-	set theMessages to current messages
-	--(plain text content of (item 1 of theMessages))
-	--return paragraphs of result
-end tell
-
--- Count the messages received from Outlook.
-set theMessageCount to count theMessages
-
 
 -- Loop through the messages received from Outlook.
 tell application "Microsoft Outlook"
+	set theMessages to current messages
+	-- Count the messages received from Outlook.
+	set theMessageCount to count theMessages
+	
 	repeat with a from 1 to theMessageCount
 		-- Target the current message in the loop.
 		tell item a of theMessages
